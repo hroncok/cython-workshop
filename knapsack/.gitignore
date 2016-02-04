@@ -1,0 +1,16 @@
+*.py[cod]
+*.sw[po]
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+sdist
+
+*.sqlite3
+*.pdf
+
+data/*/*.jsons
+*.so
+*.c

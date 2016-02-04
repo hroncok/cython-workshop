@@ -1,0 +1,427 @@
+\documentclass{beamer}
+
+\mode<presentation> {
+  \usetheme{Goettingen}
+  \setbeamercovered{transparent}
+}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{listings}
+\usepackage{courier}
+\definecolor{thisblue}{RGB}{51 51 179}
+\hypersetup{allcolors=thisblue,colorlinks=true}
+
+\beamertemplatenavigationsymbolsempty
+
+\newcommand*{\pic}[2][]{%
+\centering\begin{adjustbox}{max size={\textwidth}{0.85\textheight}}
+    \includegraphics[#1]{#2}%
+\end{adjustbox}
+}
+
+\lstset{language=Python}
+\lstset{
+ morekeywords={cdef,cpdef,timeit,cython,load_ext,assert,double,NULL,size_t,void,bint,ctypedef,struct,union,short,unsigned,cimport,readonly}
+}
+
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+\definecolor{mygreen}{rgb}{0,0.5,0}
+\definecolor{myorange}{rgb}{1.0,0.4,0}
+
+\lstset{
+basicstyle=\ttfamily\color{black},
+breaklines=true,
+commentstyle=\color{mygray},
+keywordstyle=\bfseries\color{thisblue},
+numberstyle=\color{mygray},
+%identifierstyle=\color{mygreen},
+showspaces=false,
+showstringspaces=false,
+stringstyle=\color{myorange}
+}
+
+\lstset{literate=%
+   *{0}{{{\color{mygreen}0}}}1
+    {1}{{{\color{mygreen}1}}}1
+    {2}{{{\color{mygreen}2}}}1
+    {3}{{{\color{mygreen}3}}}1
+    {4}{{{\color{mygreen}4}}}1
+    {5}{{{\color{mygreen}5}}}1
+    {6}{{{\color{mygreen}6}}}1
+    {7}{{{\color{mygreen}7}}}1
+    {8}{{{\color{mygreen}8}}}1
+    {9}{{{\color{mygreen}9}}}1
+}
+
+\title{Cython: Stop writing native Python extensions in C}
+\author{Miro Hrončok}
+\institute[D2016]{DevConf.cz 2016}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%\begin{frame}
+%  \frametitle{Contents}
+%  \tableofcontents
+%\end{frame}
+
+
+\section{Little exercise}
+
+\begin{frame}
+  \frametitle{Little exercise}
+    \begin{itemize}
+      \item What are your skills?
+      \begin{enumerate}
+        \item Python beginner
+        \item Python almost guru
+        \item Python guru not knowing native extensions
+        \item Python guru knowing native extensions
+      \end{enumerate}
+      \item raise your hand with so many fingers
+      \item please create pairs (1-4 and 2-3 if possible)
+      \item get stuff from \href{https://github.com/hroncok/cython-workshop}{github.com/hroncok/cython-workshop}
+      \item get Cython and IPython (for Python 3)
+    \end{itemize}
+\end{frame}
+
+\section{About Cython}
+
+\begin{frame}
+  \frametitle{About Cython}
+    \begin{itemize}
+      \item \href{http://cython.org/}{cython.org}
+      \item programming language
+        \begin{itemize}
+          \item similar to Python
+          \item static typing from C/C++
+        \end{itemize}
+      \item compiler
+        \begin{itemize}
+          \item from Cython language to C/C++
+          \item to Python extension module
+          \item or to standalone apps*
+        \end{itemize}
+      \item feels like Python
+      \item woks like C/C++
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Cython: A Guide for Python Programmers}
+    \pic{book.jpg}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Python extension modules}
+    \begin{itemize}
+      \item \href{https://docs.python.org/3/extending/extending.html}{Extending Python with C or C++}
+      \item I refer to them as ``native extensions'' a lot
+      \item performance
+      \item interacting with C/C++ libraries/code
+      \item \lstinline{\#include <Python.h>}
+      \item it hurts to write
+      \item it hurts to read
+      \item it hurts to maintain
+      \item it hurts to keep it compatible with both Pythons
+      \item Cython makes all this easy
+    \end{itemize}
+\end{frame}
+
+\section{Fibonacci}
+
+\begin{frame}[fragile]
+  \frametitle{Fibonacci}
+    \begin{lstlisting}
+def pyfib(n):
+    a, b = 0, 1
+    for i in range(n):
+        a, b = a + b, a
+    return a
+
+
+# In IPython, try to run it like:
+%timeit pyfib(190)
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Fibonacci}
+    \begin{lstlisting}
+def pyfib(n):
+    a, b = 0, 1
+    for i in range(n):
+        a, b = a + b, a
+    return a
+
+
+def cyfib(int n):
+    cdef int i
+    cdef long a = 0, b = 1
+    for i in range(n):
+        a, b = a + b, a
+    return a
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Fibonacci}
+    \begin{lstlisting}
+%load_ext cythonmagic
+
+%%cython
+def cyfib(int n):
+    cdef int i
+    cdef long a = 0, b = 1
+    for i in range(n):
+        a, b = a + b, a
+    return a
+
+%timeit cyfib(190)
+    \end{lstlisting}
+\end{frame}
+
+\section{setuptools}
+
+\begin{frame}[fragile]
+  \frametitle{setuptools}
+    \begin{lstlisting}
+from setuptools import setup, Extension
+from Cython.Distutils import build_ext
+
+setup(
+    cmdclass={'build_ext': build_ext},
+    ext_modules=[
+        Extension('fib', ['fib.pyx'])],
+    classifiers=[
+        'Programming Language :: Cython'],
+)
+    \end{lstlisting}
+\end{frame}
+
+\section{Types}
+
+\begin{frame}[fragile]
+  \frametitle{Typing}
+    \begin{lstlisting}
+a = [x + 1 for x in range(12)]
+b = a
+a[3] = 42.0
+assert b[3] == 42.0
+a = 13
+assert isinstance(b, list)
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Typing}
+    \begin{lstlisting}
+def dummy_func():
+    cdef int i
+    cdef int j
+    cdef float k
+
+    j = 0
+    i = j
+    k = 12.0
+    j = 2 * k
+    assert i != j
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Typing}
+    \begin{lstlisting}
+def several_at_once():
+    cdef int i, j, k
+    cdef float price, margin
+    #...
+
+def optional_initial_value():
+    cdef int i = 0
+    cdef long int j = 0, k = 0
+    cdef float price = 0.0, margin = 1.0
+    #...
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Pointers, Arrays, bint...}
+    \begin{lstlisting}
+cdef int *p
+cdef void **buf = NULL
+cdef void (*func)(int, double)
+
+cdef size_t arr[3]
+
+cdef double golden_ratio
+cdef double *p_double
+
+p_double = &golden_ratio
+p_double[0] = 1.618
+print(golden_ratio)
+print(p_double[0])
+
+cdef bint ok
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Structs, union}
+    \begin{lstlisting}
+cdef struct coord:
+    float x
+    float y
+    float z
+
+cdef union uu:
+    int a
+    short b, c
+
+ctypedef struct coord:
+    #...
+
+ctypedef union uu:
+    #...
+
+cdef uu myvar
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Structs initialization}
+    \begin{lstlisting}
+cdef coord a = coord(0.0, 2.0, 1.5)
+
+cdef coord b = coord(x=0.0, y=2.0, z=1.5)
+
+cdef coord c
+c.x = 42.0
+c.y = 2.0
+c.z = 4.0
+
+cdef coord d = {'x':2.0,
+                'y':0.0,
+                'z':-0.75}
+    \end{lstlisting}
+\end{frame}
+
+
+\section{Functions}
+
+\begin{frame}[fragile]
+  \frametitle{Cython's Three Kinds of Functions}
+    \begin{itemize}
+      \item \lstinline{def}
+      \item \lstinline{cdef}
+      \item \lstinline{cpdef}
+    \end{itemize}
+    \begin{lstlisting}
+def cyfib(int n):
+    cdef int i
+    cdef long a = 0, b = 1
+    for i in range(n):
+        a, b = a + b, a
+    return a
+
+cdef long cyfib(int n):
+    #...
+
+cpdef long cyfib(int n):
+    #...
+    \end{lstlisting}
+\end{frame}
+
+
+
+\section{Classes}
+
+\begin{frame}[fragile]
+  \frametitle{Classes and Extension Types}
+    \begin{lstlisting}
+from libc.stdlib cimport malloc, free
+
+cdef class Matrix:
+    cdef readonly unsigned int nr, nc
+    cdef double *_matrix
+
+    def __cinit__(self, nr, nc):
+        self.nr, self.nc = nr, nc
+        self._matrix = <double*>malloc(nr * nc * sizeof(double))
+        if self._matrix == NULL:
+            raise MemoryError()
+
+    def __dealloc__(self):
+        if self._matrix != NULL:
+            free(self._matrix)
+
+    \end{lstlisting}
+\end{frame}
+
+
+\section{Knapsack}
+
+\begin{frame}
+  \frametitle{Knapsack Problem}
+    \begin{itemize}
+      \item problem from combinatorial optimization
+      \item \href{https://en.wikipedia.org/wiki/Knapsack_problem}{Wikipedia}
+      \item you have a knapsack with a given capacity
+      \item you get bunch of items with costs and weights
+      \item get the most expensive combination that fits in
+      \item bruteforce is $O(2^n)$
+      \item get it from \href{https://github.com/hroncok/cython-workshop}{github.com/hroncok/cython-workshop}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Knapsack Problem}
+    \begin{lstlisting}
+sack = {
+    'id': 1,
+    'count': 15,
+    'capacity': 18.5,
+    'items': [
+        {'weight': 2.0, 'cost': 2.5},
+        #...
+    ],
+}
+
+solver = BruteSolver(sack)
+maxcombo, maxcost = solver.solve()
+    \end{lstlisting}
+\end{frame}
+
+
+\section{Further information}
+
+\begin{frame}
+  \frametitle{Further information}
+    \begin{itemize}
+      \item \href{http://docs.cython.org/}{docs.cython.org}:
+      \begin{itemize}
+        \item \href{http://docs.cython.org/src/tutorial/clibraries.html}{Using C libraries}
+        \item \href{http://docs.cython.org/src/tutorial/numpy.html}{Working with NumPy}
+        \item plenty of other topics
+      \end{itemize}
+      \item \href{http://shop.oreilly.com/product/0636920033431.do}{Cython book}
+      \item \href{https://github.com/cythonbook/examples}{examples from the book}
+      \item contact me
+      \begin{itemize}
+        \item miro@redhat.com
+        \item mhroncok @ freenode
+        \item @hroncok on Twitter or GitHub
+      \end{itemize}
+    \end{itemize}
+\end{frame}
+
+
+\end{document}
+

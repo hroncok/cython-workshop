@@ -1,0 +1,8 @@
+dependencies: []
+devassistant_version: 0.11.0
+original_kwargs:
+  name: !!python/unicode 'mipaa'
+  venv: !!python/unicode ''
+project_type:
+- python
+- lib
