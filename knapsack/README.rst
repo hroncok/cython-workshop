@@ -24,7 +24,7 @@ After you update the code, don't forget to rebuild it! The same thing applies ab
 
 Annotate your Cython code and see what's yellow::
 
-   cython --annotate knapsack/csolver.pyx # see knapsack/csolver.html
+   cython3 --annotate knapsack/csolver.pyx # see knapsack/csolver.html
 
 Once you gather some data, you can plot the time results as follows::
 
