@@ -1,6 +1,3 @@
-import itertools
-
-
 class CBruteSolver:
 
     '''
@@ -12,6 +9,7 @@ class CBruteSolver:
         Takes a sack dict as returned by DataLoader
         '''
         self.sack = sack
+
 
     def int2list(self, n):
         l = []
